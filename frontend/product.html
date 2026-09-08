@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="Burak Review ürün incelemesi."
+    >
+
+    <title>Ürün İncelemesi | Burak Review</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+</head>
+
+
+<body>
+
+<header>
+
+    <div class="nav">
+
+        <a href="index.html" class="logo">
+            BR <span>Burak Review</span>
+        </a>
+
+        <nav>
+
+            <a href="index.html#urunler">
+                Ürünler
+            </a>
+
+            <a href="index.html#kategoriler">
+                Kategoriler
+            </a>
+
+            <a href="index.html#hakkimizda">
+                Hakkımızda
+            </a>
+
+        </nav>
+
+    </div>
+
+</header>
+
+
+<main>
+
+    <section
+        id="productContent"
+        class="product-detail"
+    >
+
+        <a
+            href="index.html#urunler"
+            class="back-link"
+        >
+            ← Ürünlere dön
+        </a>
+
+
+        <div class="detail-image">
+
+            <img
+                id="detailImage"
+                src=""
+                alt=""
+            >
+
+            <span
+                id="detailIcon"
+                class="image-fallback"
+                style="display:none;"
+            ></span>
+
+        </div>
+
+
+        <div class="detail-info">
+
+            <div
+                id="detailCategory"
+                class="product-category"
+            ></div>
+
+
+            <h1 id="detailTitle"></h1>
+
+
+            <p id="detailDescription"></p>
+
+
+            <div class="review-score">
+
+                <span
+                    id="detailStars"
+                    class="stars"
+                ></span>
+
+                <strong>
+                    <span id="detailRating"></span> / 5
+                </strong>
+
+            </div>
+
+
+            <div class="review-verdict">
+
+                <span>●</span>
+
+                <span id="detailVerdict"></span>
+
+            </div>
+
+
+            <div class="review-section">
+
+                <h3>
+                    👍 Artıları
+                </h3>
+
+                <ul id="prosList"></ul>
+
+            </div>
+
+
+            <div class="review-section">
+
+                <h3>
+                    👎 Eksileri
+                </h3>
+
+                <ul id="consList"></ul>
+
+            </div>
+
+
+            <div class="review-section">
+
+                <h3>
+                    👤 Kimler almalı?
+                </h3>
+
+                <ul id="shouldBuyList"></ul>
+
+            </div>
+
+
+            <div class="review-section">
+
+                <h3>
+                    ⚠️ Kimler almamalı?
+                </h3>
+
+                <ul id="shouldNotBuyList"></ul>
+
+            </div>
+
+
+            <div class="review-section specs-section">
+
+                <h3>
+                    📋 Teknik Özellikler
+                </h3>
+
+                <div class="specs-table-wrap">
+
+                    <table class="specs-table">
+
+                        <tbody id="specsTable"></tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="review-section">
+
+                <h3>
+                    🧠 Sonuç
+                </h3>
+
+                <p id="finalVerdict"></p>
+
+            </div>
+
+
+            <div class="review-price">
+
+                <span>
+                    İncelediğimiz fiyat
+                </span>
+
+                <strong id="detailPrice"></strong>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <section
+        id="productNotFound"
+        class="about"
+        style="display:none;"
+    >
+
+        <small>BURAK REVIEW</small>
+
+        <h2>
+            Ürün bulunamadı.
+        </h2>
+
+        <p>
+            Aradığın ürün mevcut değil veya bağlantı hatalı.
+        </p>
+
+        <a
+            href="index.html#urunler"
+            class="review-btn"
+        >
+            Ürünlere dön →
+        </a>
+
+    </section>
+
+</main>
+
+
+<footer>
+
+    <strong>
+        Burak Review
+    </strong>
+
+    <span>
+        © 2026
+    </span>
+
+</footer>
+
+
+<script src="product.js"></script>
+
+</body>
+
+</html>
