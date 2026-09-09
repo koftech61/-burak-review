@@ -18,19 +18,88 @@ from auth import (
 )
 
 HOST = "0.0.0.0"
-PORT = 8765
+PORT = int(os.environ.get("PORT", "8765"))
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "data", "products.db")
+PRODUCTS_JSON = os.path.join(BASE_DIR, "data", "products.json")
 IMAGES_DIR = os.path.join(BASE_DIR, "images")
 
 os.makedirs(IMAGES_DIR, exist_ok=True)
+os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
 
 def get_db():
     db = sqlite3.connect(DB_PATH)
     db.row_factory = sqlite3.Row
     return db
+
+
+def init_db():
+    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+
+    db = sqlite3.connect(DB_PATH)
+
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS products (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            slug TEXT NOT NULL,
+            brand TEXT NOT NULL,
+            name TEXT NOT NULL,
+            category TEXT NOT NULL,
+            image TEXT,
+            rating REAL NOT NULL,
+            verdict TEXT,
+            price TEXT,
+            description TEXT,
+            pros TEXT,
+            cons TEXT,
+            should_buy TEXT,
+            should_not_buy TEXT,
+            specs TEXT,
+            final_verdict TEXT
+        )
+        """
+    )
+
+    if db.execute("SELECT COUNT(*) FROM products").fetchone()[0] == 0:
+        if os.path.exists(PRODUCTS_JSON):
+            with open(PRODUCTS_JSON, "r", encoding="utf-8") as f:
+                products = json.load(f)
+
+            for data in products:
+                db.execute(
+                    """
+                    INSERT INTO products (
+                        slug, brand, name, category, image,
+                        rating, verdict, price, description,
+                        pros, cons, should_buy, should_not_buy,
+                        specs, final_verdict
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        data["slug"],
+                        data["brand"],
+                        data["name"],
+                        data["category"],
+                        data.get("image", ""),
+                        data["rating"],
+                        data.get("verdict", ""),
+                        data.get("price", ""),
+                        data.get("description", ""),
+                        json.dumps(data.get("pros", []), ensure_ascii=False),
+                        json.dumps(data.get("cons", []), ensure_ascii=False),
+                        json.dumps(data.get("shouldBuy", []), ensure_ascii=False),
+                        json.dumps(data.get("shouldNotBuy", []), ensure_ascii=False),
+                        json.dumps(data.get("specs", {}), ensure_ascii=False),
+                        data.get("finalVerdict", "")
+                    )
+                )
+
+    db.commit()
+    db.close()
 
 
 def row_to_product(row):
@@ -596,6 +665,7 @@ class BurakReviewServer(SimpleHTTPRequestHandler):
             )
 
 
+init_db()
 os.chdir(BASE_DIR)
 
 server = ThreadingHTTPServer(

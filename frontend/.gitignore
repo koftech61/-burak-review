@@ -8,3 +8,5 @@ __pycache__/
 *.stage*
 auth_test.py
 login_integration_test.py
+
+*.before-live-cleanup
