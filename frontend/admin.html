@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="robots" content="noindex, nofollow">
+
+    <title>BURAK REVIEW — Admin</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header>
+    <div class="nav">
+        <a href="index.html" class="logo">
+            BR <span>Burak Review</span>
+        </a>
+
+        <nav>
+            <a href="index.html">Siteye dön</a>
+
+            <button
+                type="button"
+                id="logoutButton"
+            >
+                Çıkış Yap
+            </button>
+        </nav>
+    </div>
+</header>
+
+<main class="admin-page">
+
+    <section class="admin-header">
+        <small>BURAK REVIEW / YÖNETİM</small>
+
+        <h1>
+            Yeni ürün
+            <strong>ekle.</strong>
+        </h1>
+
+        <p>
+            Ürün bilgilerini doldur. Teknik özelliklerini ekle.
+            Sonra ürünü yayınlamaya hazır hale getir.
+        </p>
+    </section>
+
+
+    <form id="productForm" class="admin-form">
+
+        <!-- TEMEL BİLGİLER -->
+
+        <section class="admin-card">
+
+            <div class="admin-card-title">
+                <span>01</span>
+
+                <div>
+                    <h2>Temel bilgiler</h2>
+                    <p>Ürünün kimliğini oluştur.</p>
+                </div>
+            </div>
+
+
+            <div class="admin-grid">
+
+                <label>
+                    Ürün adı
+                    <input
+                        id="productName"
+                        type="text"
+                        placeholder="Örn. Sony WH-1000XM6"
+                        required
+                    >
+                </label>
+
+
+                <label>
+                    Marka
+                    <input
+                        id="productBrand"
+                        type="text"
+                        placeholder="Örn. Sony"
+                        required
+                    >
+                </label>
+
+
+                <label>
+                    Kategori
+
+                    <select id="productCategory" required>
+                        <option value="">Kategori seç</option>
+                        <option value="Kulaklık">Kulaklık</option>
+                        <option value="Klavye">Klavye</option>
+                        <option value="Mouse">Mouse</option>
+                        <option value="Telefon">Telefon</option>
+                        <option value="Laptop">Laptop</option>
+                    </select>
+                </label>
+
+
+                <label>
+                    Puan
+                    <input
+                        id="productRating"
+                        type="number"
+                        min="0"
+                        max="5"
+                        step="0.1"
+                        placeholder="4.7"
+                        required
+                    >
+                </label>
+
+
+                <label class="full-width">
+                    Fiyat
+                    <input
+                        id="productPrice"
+                        type="text"
+                        placeholder="Örn. 9.999 TL"
+                    >
+                </label>
+
+            </div>
+
+        </section>
+
+
+        <!-- FOTOĞRAF -->
+
+        <section class="admin-card">
+
+            <div class="admin-card-title">
+                <span>02</span>
+
+                <div>
+                    <h2>Ürün fotoğrafı</h2>
+                    <p>Ürünün ana görselini seç.</p>
+                </div>
+            </div>
+
+
+            <label class="upload-box">
+
+                <input
+                    id="productImage"
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                >
+
+                <span class="upload-icon">＋</span>
+
+                <strong>Fotoğraf seç</strong>
+
+                <small>
+                    PNG, JPG veya WEBP
+                </small>
+
+            </label>
+
+
+            <div id="imagePreview" class="admin-image-preview"></div>
+
+        </section>
+
+
+        <!-- AÇIKLAMA -->
+
+        <section class="admin-card">
+
+            <div class="admin-card-title">
+                <span>03</span>
+
+                <div>
+                    <h2>İnceleme</h2>
+                    <p>Ürünün hikayesini anlat.</p>
+                </div>
+            </div>
+
+
+            <label>
+                Kısa açıklama
+
+                <textarea
+                    id="productDescription"
+                    rows="5"
+                    placeholder="Bu ürün hakkında kısa ve etkileyici bir açıklama..."
+                    required
+                ></textarea>
+
+            </label>
+
+
+            <label>
+                Genel karar
+
+                <input
+                    id="productVerdict"
+                    type="text"
+                    placeholder="Örn. Güçlü bir premium kulaklık."
+                    required
+                >
+
+            </label>
+
+        </section>
+
+
+        <!-- ARTILAR -->
+
+        <section class="admin-card">
+
+            <div class="admin-card-title">
+                <span>04</span>
+
+                <div>
+                    <h2>Artılar</h2>
+                    <p>Ürünün güçlü tarafları.</p>
+                </div>
+            </div>
+
+
+            <div id="prosContainer" class="dynamic-list"></div>
+
+            <button
+                type="button"
+                id="addPro"
+                class="admin-secondary-btn"
+            >
+                + Artı ekle
+            </button>
+
+        </section>
+
+
+        <!-- EKSİLER -->
+
+        <section class="admin-card">
+
+            <div class="admin-card-title">
+                <span>05</span>
+
+                <div>
+                    <h2>Eksiler</h2>
+                    <p>Ürünün zayıf tarafları.</p>
+                </div>
+            </div>
+
+
+            <div id="consContainer" class="dynamic-list"></div>
+
+            <button
+                type="button"
+                id="addCon"
+                class="admin-secondary-btn"
+            >
+                + Eksi ekle
+            </button>
+
+        </section>
+
+
+        <!-- KİMLER ALMALI -->
+
+        <section class="admin-card">
+
+            <div class="admin-card-title">
+                <span>06</span>
+
+                <div>
+                    <h2>Hedef kullanıcı</h2>
+                    <p>Kimler için uygun?</p>
+                </div>
+            </div>
+
+
+            <label>
+                Kimler almalı?
+
+                <textarea
+                    id="shouldBuy"
+                    rows="4"
+                    placeholder="Her satıra bir kullanıcı grubu yaz..."
+                ></textarea>
+
+            </label>
+
+
+            <label>
+                Kimler almamalı?
+
+                <textarea
+                    id="shouldNotBuy"
+                    rows="4"
+                    placeholder="Her satıra bir kullanıcı grubu yaz..."
+                ></textarea>
+
+            </label>
+
+        </section>
+
+
+        <!-- TEKNİK ÖZELLİKLER -->
+
+        <section class="admin-card">
+
+            <div class="admin-card-title">
+                <span>07</span>
+
+                <div>
+                    <h2>Teknik özellikler</h2>
+                    <p>Ürünün teknik detaylarını gir.</p>
+                </div>
+            </div>
+
+
+            <div id="specsContainer" class="specs-editor"></div>
+
+
+            <button
+                type="button"
+                id="addSpec"
+                class="admin-secondary-btn"
+            >
+                + Teknik özellik ekle
+            </button>
+
+        </section>
+
+
+        <!-- SONUÇ -->
+
+        <section class="admin-card">
+
+            <div class="admin-card-title">
+                <span>08</span>
+
+                <div>
+                    <h2>Sonuç</h2>
+                    <p>Okuyucuya son kararını söyle.</p>
+                </div>
+            </div>
+
+
+            <label>
+                Son değerlendirme
+
+                <textarea
+                    id="finalVerdict"
+                    rows="7"
+                    placeholder="Ürünün genel değerlendirmesini yaz..."
+                    required
+                ></textarea>
+
+            </label>
+
+        </section>
+
+
+        <!-- İŞLEMLER -->
+
+        <section class="admin-actions">
+
+            <button
+                type="button"
+                id="previewProduct"
+                class="admin-secondary-btn large"
+            >
+                👀 Önizle
+            </button>
+
+
+            <button
+                type="submit"
+                class="admin-primary-btn"
+            >
+                🚀 Ürünü hazırla
+            </button>
+
+        </section>
+
+
+        <div
+            id="adminMessage"
+            class="admin-message"
+            aria-live="polite"
+        ></div>
+
+    </form>
+
+</main>
+
+
+<footer>
+    <strong>Burak Review</strong>
+    <span>© 2026</span>
+</footer>
+
+
+<script src="admin.js"></script>
+
+</body>
+</html>

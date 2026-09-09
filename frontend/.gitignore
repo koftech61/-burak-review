@@ -1,0 +1,10 @@
+secrets.env
+*.db
+__pycache__/
+*.bak
+*.backup
+*.before-security
+*.pre-auth
+*.stage*
+auth_test.py
+login_integration_test.py

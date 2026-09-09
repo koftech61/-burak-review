@@ -163,7 +163,7 @@ async function loadProducts() {
     try {
 
         const response =
-            await fetch("data/products.json");
+            await fetch("/api/products");
 
         if (!response.ok) {
             throw new Error(

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="robots" content="noindex, nofollow">
+
+    <title>BURAK REVIEW — Admin Giriş</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: #090909;
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+
+        .login-box {
+            width: 100%;
+            max-width: 420px;
+            padding: 32px;
+            border: 1px solid #292929;
+            border-radius: 20px;
+            background: #111;
+            box-shadow: 0 20px 60px rgba(0,0,0,.45);
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: 28px;
+        }
+
+        p {
+            margin: 0 0 28px;
+            color: #999;
+        }
+
+        label {
+            display: block;
+            margin: 16px 0 8px;
+            font-size: 14px;
+            color: #bbb;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #333;
+            border-radius: 10px;
+            background: #181818;
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #777;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 24px;
+            padding: 14px;
+            border: 0;
+            border-radius: 10px;
+            background: #fff;
+            color: #000;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            opacity: .5;
+            cursor: wait;
+        }
+
+        #message {
+            min-height: 22px;
+            margin-top: 16px;
+            color: #ff7777;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <main class="login-box">
+
+        <h1>🔐 BURAK REVIEW</h1>
+
+        <p>Yönetici paneline giriş yap</p>
+
+        <form id="loginForm">
+
+            <label for="username">
+                Kullanıcı adı
+            </label>
+
+            <input
+                id="username"
+                name="username"
+                type="text"
+                autocomplete="username"
+                required
+            >
+
+            <label for="password">
+                Şifre
+            </label>
+
+            <input
+                id="password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                required
+            >
+
+            <button id="loginButton" type="submit">
+                🔓 Giriş Yap
+            </button>
+
+            <div id="message"></div>
+
+        </form>
+
+    </main>
+
+    <script src="admin-login.js"></script>
+
+</body>
+</html>

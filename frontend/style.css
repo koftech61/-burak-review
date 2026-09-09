@@ -5,12 +5,19 @@
 }
 
 :root {
-    --bg: #0b0b0c;
-    --card: #151517;
-    --text: #f5f5f5;
-    --muted: #99999f;
-    --border: #29292d;
-    --accent: #f5f5f5;
+    --bg: #07080a;
+    --bg-soft: #0d0f12;
+    --card: #111419;
+    --card-hover: #161a20;
+    --text: #f7f8fa;
+    --muted: #8d939d;
+    --border: rgba(255, 255, 255, 0.09);
+    --border-hover: rgba(255, 255, 255, 0.18);
+    --accent: #ffffff;
+    --accent-soft: rgba(255, 255, 255, 0.08);
+    --success: #b8ff65;
+    --danger: #ff6b6b;
+    --radius: 18px;
 }
 
 body {
@@ -971,5 +978,1144 @@ footer {
 #searchInput::placeholder {
     color: #99999f;
     opacity: 1;
+}
+
+
+/* =========================================
+   BURAK REVIEW — PREMIUM HEADER + HERO
+   ========================================= */
+
+header {
+    background: rgba(7, 8, 10, 0.78);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.nav {
+    width: min(1180px, calc(100% - 40px));
+    min-height: 76px;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: -0.7px;
+}
+
+.logo::before {
+    content: "BR";
+
+    display: grid;
+    place-items: center;
+
+    width: 38px;
+    height: 38px;
+
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 12px;
+
+    background: linear-gradient(
+        145deg,
+        #ffffff,
+        #9da3ad
+    );
+
+    color: #08090b;
+    font-size: 13px;
+    font-weight: 950;
+
+    box-shadow:
+        0 8px 30px rgba(255,255,255,0.08);
+}
+
+.logo span {
+    margin-left: 0;
+}
+
+nav {
+    gap: 30px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+nav a {
+    position: relative;
+    transition: color 0.25s ease;
+}
+
+nav a::after {
+    content: "";
+
+    position: absolute;
+    left: 0;
+    bottom: -8px;
+
+    width: 0;
+    height: 1px;
+
+    background: #ffffff;
+
+    transition: width 0.25s ease;
+}
+
+nav a:hover::after {
+    width: 100%;
+}
+
+/* HERO */
+
+.hero {
+    position: relative;
+    overflow: hidden;
+
+    min-height: 620px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-top: 20px;
+
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 30px;
+
+    background:
+        radial-gradient(
+            circle at 50% 35%,
+            rgba(255,255,255,0.11),
+            transparent 32%
+        ),
+        radial-gradient(
+            circle at 85% 80%,
+            rgba(255,255,255,0.055),
+            transparent 28%
+        ),
+        linear-gradient(
+            145deg,
+            #111419,
+            #090a0c 65%
+        );
+
+    box-shadow:
+        0 30px 100px rgba(0,0,0,0.45);
+
+    isolation: isolate;
+}
+
+.hero::before {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    background:
+        linear-gradient(
+            120deg,
+            transparent 20%,
+            rgba(255,255,255,0.025) 50%,
+            transparent 80%
+        );
+
+    pointer-events: none;
+}
+
+.hero::after {
+    content: "";
+
+    position: absolute;
+
+    width: 500px;
+    height: 500px;
+
+    border-radius: 50%;
+
+    border: 1px solid rgba(255,255,255,0.045);
+
+    top: 50%;
+    left: 50%;
+
+    transform: translate(-50%, -50%);
+
+    box-shadow:
+        0 0 0 80px rgba(255,255,255,0.012),
+        0 0 0 160px rgba(255,255,255,0.008);
+
+    pointer-events: none;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+
+    width: min(850px, 100%);
+
+    text-align: center;
+    padding: 70px 25px;
+}
+
+.hero-content small {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    padding: 8px 14px;
+
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 999px;
+
+    background: rgba(255,255,255,0.035);
+
+    color: #aeb4bd;
+
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.8px;
+
+    margin-bottom: 28px;
+}
+
+.hero-content h1 {
+    max-width: 800px;
+    margin: auto;
+
+    font-size: clamp(48px, 8vw, 92px);
+    line-height: 0.94;
+
+    letter-spacing: -5px;
+    font-weight: 900;
+}
+
+.hero-content h1 strong {
+    display: block;
+
+    background: linear-gradient(
+        180deg,
+        #ffffff 10%,
+        #858b94 100%
+    );
+
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.hero-content p {
+    max-width: 560px;
+
+    margin: 30px auto 35px;
+
+    color: var(--muted);
+
+    font-size: 16px;
+    line-height: 1.7;
+}
+
+/* PREMIUM SEARCH */
+
+#searchInput {
+    width: min(600px, 100%);
+    height: 62px;
+
+    padding: 0 24px;
+
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 18px;
+
+    background: rgba(0,0,0,0.30);
+
+    color: #ffffff;
+
+    outline: none;
+
+    box-shadow:
+        0 15px 50px rgba(0,0,0,0.25),
+        inset 0 1px 0 rgba(255,255,255,0.04);
+
+    transition:
+        border-color 0.25s ease,
+        background 0.25s ease,
+        box-shadow 0.25s ease,
+        transform 0.25s ease;
+}
+
+#searchInput::placeholder {
+    color: #707680;
+}
+
+#searchInput:focus {
+    border-color: rgba(255,255,255,0.28);
+
+    background: rgba(0,0,0,0.42);
+
+    box-shadow:
+        0 18px 60px rgba(0,0,0,0.35),
+        0 0 0 4px rgba(255,255,255,0.035);
+
+    transform: translateY(-2px);
+}
+
+/* MOBILE */
+
+@media (max-width: 700px) {
+
+    .nav {
+        width: min(100% - 24px, 1180px);
+        min-height: 68px;
+    }
+
+    .logo {
+        font-size: 16px;
+    }
+
+    .logo::before {
+        width: 34px;
+        height: 34px;
+    }
+
+    nav {
+        gap: 14px;
+        font-size: 12px;
+    }
+
+    .hero {
+        min-height: 560px;
+        margin-top: 12px;
+        border-radius: 22px;
+    }
+
+    .hero-content {
+        padding: 55px 18px;
+    }
+
+    .hero-content h1 {
+        font-size: clamp(46px, 14vw, 70px);
+        letter-spacing: -3px;
+    }
+
+    .hero-content p {
+        font-size: 14px;
+        margin-top: 24px;
+    }
+
+    #searchInput {
+        height: 58px;
+        border-radius: 16px;
+    }
+}
+
+
+/* =========================================
+   BURAK REVIEW — PREMIUM PRODUCT CARDS
+   ========================================= */
+
+#urunler {
+    padding-top: 110px;
+    padding-bottom: 80px;
+}
+
+.title-row {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 35px;
+}
+
+.title-row h2 {
+    font-size: clamp(30px, 5vw, 48px);
+    line-height: 1;
+    letter-spacing: -2px;
+    font-weight: 900;
+}
+
+#productCount {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* ÜRÜN GRID */
+
+.products {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+}
+
+/* KART */
+
+.product {
+    position: relative;
+    overflow: hidden;
+
+    display: flex;
+    flex-direction: column;
+
+    min-height: 470px;
+
+    padding: 14px;
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255,255,255,0.045),
+            rgba(255,255,255,0.012)
+        ),
+        var(--card);
+
+    box-shadow:
+        0 15px 50px rgba(0,0,0,0.20);
+
+    transition:
+        transform 0.35s cubic-bezier(.2,.8,.2,1),
+        border-color 0.35s ease,
+        box-shadow 0.35s ease,
+        background 0.35s ease;
+}
+
+.product::before {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    background:
+        radial-gradient(
+            circle at 50% 0%,
+            rgba(255,255,255,0.08),
+            transparent 45%
+        );
+
+    opacity: 0;
+    transition: opacity 0.35s ease;
+
+    pointer-events: none;
+}
+
+.product:hover {
+    transform: translateY(-8px);
+
+    border-color: var(--border-hover);
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255,255,255,0.065),
+            rgba(255,255,255,0.018)
+        ),
+        var(--card-hover);
+
+    box-shadow:
+        0 30px 80px rgba(0,0,0,0.38);
+}
+
+.product:hover::before {
+    opacity: 1;
+}
+
+/* ÜRÜN GÖRSELİ */
+
+.product-image {
+    position: relative;
+
+    width: 100%;
+    height: 260px;
+
+    display: grid;
+    place-items: center;
+
+    overflow: hidden;
+
+    border-radius: 14px;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(255,255,255,0.08),
+            transparent 65%
+        ),
+        #0b0d10;
+}
+
+.product-image img {
+    width: 82%;
+    height: 82%;
+
+    object-fit: contain;
+
+    transition:
+        transform 0.5s cubic-bezier(.2,.8,.2,1),
+        filter 0.5s ease;
+}
+
+.product:hover .product-image img {
+    transform: scale(1.07);
+
+    filter:
+        drop-shadow(0 20px 25px rgba(0,0,0,0.45));
+}
+
+/* KART İÇERİĞİ */
+
+.product-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+
+    padding: 20px 8px 8px;
+}
+
+.product-category {
+    color: #8e959f;
+
+    font-size: 10px;
+    font-weight: 800;
+
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.product h3 {
+    margin-top: 8px;
+
+    font-size: 21px;
+    line-height: 1.15;
+
+    letter-spacing: -0.6px;
+
+    font-weight: 800;
+}
+
+.product-rating {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    margin-top: 14px;
+}
+
+.stars {
+    letter-spacing: 1px;
+    font-size: 13px;
+}
+
+.product-rating strong {
+    font-size: 13px;
+}
+
+.product-verdict {
+    display: inline-flex;
+    align-items: center;
+
+    width: fit-content;
+
+    margin-top: 14px;
+    padding: 6px 10px;
+
+    border: 1px solid rgba(184,255,101,0.16);
+    border-radius: 999px;
+
+    background: rgba(184,255,101,0.055);
+
+    color: var(--success);
+
+    font-size: 10px;
+    font-weight: 900;
+
+    letter-spacing: 0.7px;
+}
+
+.product-price {
+    margin-top: auto;
+    padding-top: 20px;
+
+    color: var(--muted);
+
+    font-size: 11px;
+}
+
+.product-price strong {
+    display: block;
+
+    margin-top: 3px;
+
+    color: var(--text);
+
+    font-size: 15px;
+}
+
+/* İNCELE BUTONU */
+
+.review-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 100%;
+    min-height: 48px;
+
+    margin-top: 15px;
+
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 13px;
+
+    background: rgba(255,255,255,0.055);
+
+    color: #ffffff;
+
+    font-size: 12px;
+    font-weight: 800;
+
+    transition:
+        background 0.25s ease,
+        border-color 0.25s ease,
+        transform 0.25s ease;
+}
+
+.review-btn:hover {
+    background: #ffffff;
+    border-color: #ffffff;
+
+    color: #08090b;
+
+    transform: translateY(-2px);
+}
+
+/* MOBİL / TABLET */
+
+@media (max-width: 900px) {
+
+    .products {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+}
+
+@media (max-width: 600px) {
+
+    #urunler {
+        padding-top: 75px;
+    }
+
+    .title-row {
+        align-items: start;
+        flex-direction: column;
+        margin-bottom: 25px;
+    }
+
+    .title-row h2 {
+        font-size: 34px;
+    }
+
+    .products {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .product {
+        min-height: 450px;
+    }
+
+    .product-image {
+        height: 250px;
+    }
+
+}
+
+
+/* =========================================
+   BURAK REVIEW — PREMIUM CATEGORIES
+   ========================================= */
+
+#kategoriler {
+    padding: 100px 0 20px;
+}
+
+#kategoriler h2 {
+    margin-bottom: 28px;
+
+    font-size: clamp(30px, 5vw, 46px);
+    line-height: 1;
+    letter-spacing: -2px;
+    font-weight: 900;
+}
+
+.categories {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.categories button {
+    position: relative;
+    overflow: hidden;
+
+    min-height: 100px;
+    padding: 18px 12px;
+
+    border: 1px solid var(--border);
+    border-radius: 16px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255,255,255,0.045),
+            rgba(255,255,255,0.012)
+        ),
+        var(--card);
+
+    color: var(--muted);
+
+    cursor: pointer;
+
+    font-size: 12px;
+    font-weight: 800;
+
+    transition:
+        transform 0.3s ease,
+        color 0.3s ease,
+        border-color 0.3s ease,
+        background 0.3s ease,
+        box-shadow 0.3s ease;
+}
+
+.categories button::before {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    background:
+        radial-gradient(
+            circle at 50% 0%,
+            rgba(255,255,255,0.12),
+            transparent 55%
+        );
+
+    opacity: 0;
+
+    transition: opacity 0.3s ease;
+}
+
+.categories button:hover {
+    transform: translateY(-5px);
+
+    color: var(--text);
+
+    border-color: var(--border-hover);
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255,255,255,0.07),
+            rgba(255,255,255,0.018)
+        ),
+        var(--card-hover);
+
+    box-shadow:
+        0 20px 50px rgba(0,0,0,0.25);
+}
+
+.categories button:hover::before {
+    opacity: 1;
+}
+
+.categories button.active {
+    background: #ffffff;
+    color: #08090b;
+
+    border-color: #ffffff;
+
+    box-shadow:
+        0 15px 45px rgba(255,255,255,0.10);
+}
+
+.categories button.active::before {
+    display: none;
+}
+
+/* TABLET */
+
+@media (max-width: 900px) {
+
+    .categories {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+}
+
+/* TELEFON */
+
+@media (max-width: 600px) {
+
+    #kategoriler {
+        padding-top: 75px;
+    }
+
+    .categories {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .categories button {
+        min-height: 82px;
+    }
+
+}
+
+
+/* =========================================================
+   BURAK REVIEW — STAGE 4
+   PREMIUM PRODUCT DETAIL
+   ========================================================= */
+
+.product-detail {
+    width: min(1180px, calc(100% - 40px));
+    margin: 70px auto 100px;
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: 70px;
+    align-items: start;
+    position: relative;
+}
+
+/* Geri dön */
+.back-link {
+    grid-column: 1 / -1;
+    width: fit-content;
+    color: var(--muted);
+    text-decoration: none;
+    font-weight: 700;
+    transition: 0.25s ease;
+}
+
+.back-link:hover {
+    color: var(--text);
+    transform: translateX(-4px);
+}
+
+/* Ürün görsel alanı */
+.detail-image {
+    min-height: 620px;
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    background:
+        radial-gradient(circle at 50% 35%, rgba(255,255,255,.10), transparent 38%),
+        linear-gradient(145deg, #151920, #0a0c0f);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: sticky;
+    top: 105px;
+    overflow: hidden;
+    box-shadow:
+        0 30px 80px rgba(0,0,0,.35),
+        inset 0 1px 0 rgba(255,255,255,.04);
+}
+
+.detail-image::before {
+    content: "";
+    position: absolute;
+    width: 420px;
+    height: 420px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,.06);
+    box-shadow:
+        0 0 80px rgba(255,255,255,.04),
+        inset 0 0 80px rgba(255,255,255,.025);
+}
+
+.detail-image img {
+    width: min(78%, 500px);
+    max-height: 500px;
+    object-fit: contain;
+    position: relative;
+    z-index: 2;
+    filter: drop-shadow(0 35px 35px rgba(0,0,0,.55));
+    transition: transform .5s cubic-bezier(.2,.8,.2,1);
+}
+
+.detail-image:hover img {
+    transform: scale(1.045);
+}
+
+.image-fallback {
+    position: relative;
+    z-index: 2;
+    font-size: 90px;
+}
+
+/* Sağ taraf */
+.detail-info {
+    min-width: 0;
+}
+
+.detail-info > .product-category {
+    display: inline-flex;
+    align-items: center;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    border: 1px solid var(--border);
+    color: #cfd3da;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.detail-info h1 {
+    margin-top: 18px;
+    font-size: clamp(42px, 5vw, 72px);
+    line-height: .98;
+    letter-spacing: -3px;
+    max-width: 700px;
+}
+
+.detail-info > p {
+    margin-top: 24px;
+    color: var(--muted);
+    font-size: 18px;
+    line-height: 1.75;
+    max-width: 680px;
+}
+
+/* Puan */
+.review-score {
+    margin-top: 30px;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    width: fit-content;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: linear-gradient(145deg, rgba(255,255,255,.06), rgba(255,255,255,.025));
+}
+
+.review-score .stars {
+    letter-spacing: 4px;
+    font-size: 21px;
+}
+
+.review-score strong {
+    font-size: 20px;
+}
+
+/* Karar */
+.review-verdict {
+    margin-top: 18px;
+    padding: 17px 20px;
+    border-radius: 16px;
+    border: 1px solid rgba(184,255,101,.16);
+    background: rgba(184,255,101,.055);
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    color: #d9eec5;
+    font-weight: 700;
+    line-height: 1.55;
+}
+
+.review-verdict > span:first-child {
+    color: var(--success);
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+/* Bölümler */
+.review-section {
+    margin-top: 24px;
+    padding: 26px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background:
+        linear-gradient(145deg, rgba(255,255,255,.045), rgba(255,255,255,.018));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.025);
+}
+
+.review-section h3 {
+    margin-bottom: 18px;
+    font-size: 19px;
+    letter-spacing: -.3px;
+}
+
+.review-section ul {
+    list-style: none;
+    display: grid;
+    gap: 11px;
+}
+
+.review-section li {
+    color: #c1c6ce;
+    line-height: 1.6;
+    padding-left: 21px;
+    position: relative;
+}
+
+.review-section li::before {
+    content: "—";
+    position: absolute;
+    left: 0;
+    color: #737983;
+}
+
+/* Teknik tablo */
+.specs-section {
+    overflow: hidden;
+}
+
+.specs-table-wrap {
+    overflow-x: auto;
+}
+
+.specs-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.specs-table tr {
+    border-bottom: 1px solid rgba(255,255,255,.07);
+}
+
+.specs-table tr:last-child {
+    border-bottom: 0;
+}
+
+.specs-table td {
+    padding: 14px 4px;
+    color: #c7cbd2;
+    vertical-align: top;
+}
+
+.specs-table td:first-child {
+    width: 42%;
+    color: #777e89;
+    font-weight: 700;
+}
+
+.specs-table td:last-child {
+    color: #eef0f3;
+    font-weight: 600;
+}
+
+/* Sonuç */
+#finalVerdict {
+    color: #c7cbd2;
+    font-size: 16px;
+    line-height: 1.8;
+}
+
+/* Fiyat */
+.review-price {
+    margin-top: 24px;
+    padding: 24px 26px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,.14);
+    background:
+        linear-gradient(135deg, rgba(255,255,255,.09), rgba(255,255,255,.025));
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.review-price span {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
+
+.review-price strong {
+    font-size: 22px;
+    text-align: right;
+}
+
+/* Bulunamadı */
+#productNotFound {
+    width: min(900px, calc(100% - 40px));
+    margin: 100px auto;
+    border-radius: 28px;
+    border: 1px solid var(--border);
+    background: var(--card);
+}
+
+/* Tablet */
+@media (max-width: 900px) {
+    .product-detail {
+        grid-template-columns: 1fr;
+        gap: 35px;
+        margin-top: 45px;
+    }
+
+    .detail-image {
+        min-height: 500px;
+        position: relative;
+        top: auto;
+    }
+
+    .detail-info h1 {
+        font-size: clamp(42px, 8vw, 64px);
+    }
+}
+
+/* Mobil */
+@media (max-width: 600px) {
+    .product-detail {
+        width: min(100% - 24px, 1180px);
+        margin: 30px auto 70px;
+    }
+
+    .detail-image {
+        min-height: 360px;
+        border-radius: 22px;
+    }
+
+    .detail-image img {
+        width: 82%;
+        max-height: 320px;
+    }
+
+    .detail-image::before {
+        width: 270px;
+        height: 270px;
+    }
+
+    .detail-info h1 {
+        font-size: 40px;
+        letter-spacing: -2px;
+    }
+
+    .detail-info > p {
+        font-size: 16px;
+    }
+
+    .review-score {
+        width: 100%;
+    }
+
+    .review-section {
+        padding: 20px;
+        border-radius: 17px;
+    }
+
+    .review-price {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .review-price strong {
+        text-align: left;
+    }
 }
 
