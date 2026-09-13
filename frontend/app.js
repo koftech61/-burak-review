@@ -69,86 +69,123 @@ function renderProducts() {
         card.className = "product";
 
 
-        card.innerHTML = `
+        const imageDiv =
+            document.createElement("div");
+        imageDiv.className = "product-image";
 
-            <div class="product-image">
+        const img = document.createElement("img");
 
-                <img
-                    src="${product.image}"
-                    alt="${product.brand} ${product.name}"
-                    onerror="this.style.display='none'; this.parentElement.textContent='${product.category}'"
-                >
+        if (product.image) {
+            img.src = product.image;
+        }
 
-            </div>
+        img.alt =
+            `${product.brand} ${product.name}`;
 
+        img.addEventListener("error", () => {
+            img.style.display = "none";
+            imageDiv.textContent = product.category;
+        });
 
-            <div class="product-info">
-
-                <div class="product-category">
-                    ${product.brand} • ${product.category}
-                </div>
-
-
-                <h3>
-                    ${product.name}
-                </h3>
+        imageDiv.appendChild(img);
+        card.appendChild(imageDiv);
 
 
-                <div class="rating">
-
-                    <span class="stars">
-                        ${createStars(product.rating)}
-                    </span>
-
-                    <strong>
-                        ${product.rating}
-                    </strong>
-
-                    <span>
-                        / 5
-                    </span>
-
-                </div>
+        const infoDiv =
+            document.createElement("div");
+        infoDiv.className = "product-info";
 
 
-                <div class="verdict">
+        const categoryDiv =
+            document.createElement("div");
+        categoryDiv.className = "product-category";
+        categoryDiv.textContent =
+            `${product.brand} • ${product.category}`;
 
-                    <span>●</span>
-
-                    ${product.verdict}
-
-                </div>
-
-
-                <div class="product-bottom">
-
-                    <strong class="price">
-                        ${product.price}
-                    </strong>
+        infoDiv.appendChild(categoryDiv);
 
 
-                    <button
-                        class="review-btn"
-                        type="button">
+        const nameHeading =
+            document.createElement("h3");
+        nameHeading.textContent = product.name;
 
-                        İncelemeyi Gör →
-
-                    </button>
-
-                </div>
-
-            </div>
-        `;
+        infoDiv.appendChild(nameHeading);
 
 
-        card
-            .querySelector(".review-btn")
-            .addEventListener("click", () => {
+        const ratingDiv =
+            document.createElement("div");
+        ratingDiv.className = "rating";
 
-                window.location.href =
-                    `product.html?urun=${product.slug}`;
+        const starsSpan =
+            document.createElement("span");
+        starsSpan.className = "stars";
+        starsSpan.textContent =
+            createStars(product.rating);
 
-            });
+        ratingDiv.appendChild(starsSpan);
+
+        const ratingStrong =
+            document.createElement("strong");
+        ratingStrong.textContent = product.rating;
+
+        ratingDiv.appendChild(ratingStrong);
+
+        const ratingSlash =
+            document.createElement("span");
+        ratingSlash.textContent = " / 5";
+
+        ratingDiv.appendChild(ratingSlash);
+
+        infoDiv.appendChild(ratingDiv);
+
+
+        const verdictDiv =
+            document.createElement("div");
+        verdictDiv.className = "verdict";
+
+        const verdictDot =
+            document.createElement("span");
+        verdictDot.textContent = "●";
+
+        verdictDiv.appendChild(verdictDot);
+
+        verdictDiv.appendChild(
+            document.createTextNode(
+                product.verdict || ""
+            )
+        );
+
+        infoDiv.appendChild(verdictDiv);
+
+
+        const bottomDiv =
+            document.createElement("div");
+        bottomDiv.className = "product-bottom";
+
+        const priceStrong =
+            document.createElement("strong");
+        priceStrong.className = "price";
+        priceStrong.textContent = product.price || "";
+
+        bottomDiv.appendChild(priceStrong);
+
+        const reviewBtn =
+            document.createElement("button");
+        reviewBtn.className = "review-btn";
+        reviewBtn.type = "button";
+        reviewBtn.textContent = "İncelemeyi Gör →";
+
+        reviewBtn.addEventListener("click", () => {
+            window.location.href =
+                `product.html?urun=${encodeURIComponent(product.slug)}`;
+        });
+
+        bottomDiv.appendChild(reviewBtn);
+
+        infoDiv.appendChild(bottomDiv);
+
+
+        card.appendChild(infoDiv);
 
 
         productsContainer.appendChild(card);
@@ -190,14 +227,27 @@ async function loadProducts() {
 
         console.error(error);
 
-        productsContainer.innerHTML = `
-            <div class="empty-state">
-                <h3>Ürünler yüklenemedi.</h3>
-                <p>
-                    Ürün kataloğunu kontrol edip sayfayı yenileyin.
-                </p>
-            </div>
-        `;
+        productsContainer.innerHTML = "";
+
+        const emptyState =
+            document.createElement("div");
+        emptyState.className = "empty-state";
+
+        const emptyHeading =
+            document.createElement("h3");
+        emptyHeading.textContent =
+            "Ürünler yüklenemedi.";
+
+        emptyState.appendChild(emptyHeading);
+
+        const emptyPara =
+            document.createElement("p");
+        emptyPara.textContent =
+            "Ürün kataloğunu kontrol edip sayfayı yenileyin.";
+
+        emptyState.appendChild(emptyPara);
+
+        productsContainer.appendChild(emptyState);
 
         productCount.textContent =
             "0 ürün";
