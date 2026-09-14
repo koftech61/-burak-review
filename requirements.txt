@@ -1,1 +1,3 @@
-# BURAK REVIEW - external Python dependencies
+# BURAK REVIEW - Python dependencies
+# Project uses only Python standard library — no external packages required.
+# This file exists so Render detects the project as a Python service.
