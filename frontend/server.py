@@ -242,6 +242,46 @@ def authenticate(handler):
 
 class BurakReviewServer(SimpleHTTPRequestHandler):
 
+    def end_headers(self):
+        self.send_security_headers()
+        super().end_headers()
+
+    def send_security_headers(self):
+        self.send_header(
+            "X-Content-Type-Options",
+            "nosniff"
+        )
+        self.send_header(
+            "X-Frame-Options",
+            "DENY"
+        )
+        self.send_header(
+            "Referrer-Policy",
+            "strict-origin-when-cross-origin"
+        )
+        self.send_header(
+            "Permissions-Policy",
+            "geolocation=(), microphone=(), camera=()"
+        )
+        self.send_header(
+            "Content-Security-Policy",
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline'; "
+            "style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' https: data: blob:; "
+            "font-src 'self'; "
+            "connect-src 'self'; "
+            "frame-ancestors 'none'; "
+            "base-uri 'self'; "
+            "form-action 'self'"
+        )
+
+        if is_https(self):
+            self.send_header(
+                "Strict-Transport-Security",
+                "max-age=31536000; includeSubDomains"
+            )
+
     def send_json(self, data, status=200):
         body = json.dumps(
             data,
@@ -759,6 +799,13 @@ class BurakReviewServer(SimpleHTTPRequestHandler):
                 )
                 return
 
+            if content_length > 6 * 1024 * 1024:
+                self.send_json(
+                    {"error": "İstek çok büyük (maks. 6 MB)."},
+                    413
+                )
+                return
+
             raw_data = self.rfile.read(
                 content_length
             )
@@ -785,6 +832,56 @@ class BurakReviewServer(SimpleHTTPRequestHandler):
                         400
                     )
                     return
+
+            MAX_TEXT = 500
+            MAX_LONG = 5000
+            MAX_LIST_ITEMS = 20
+
+            text_fields = {
+                "slug": MAX_TEXT,
+                "brand": MAX_TEXT,
+                "name": MAX_TEXT,
+                "category": MAX_TEXT,
+                "verdict": MAX_TEXT,
+                "price": MAX_TEXT,
+                "description": MAX_LONG,
+                "finalVerdict": MAX_LONG
+            }
+
+            for field, limit in text_fields.items():
+                value = data.get(field, "")
+                if isinstance(value, str) and len(value) > limit:
+                    self.send_json(
+                        {
+                            "error":
+                            f"{field} çok uzun (maks. {limit} karakter)."
+                        },
+                        400
+                    )
+                    return
+
+            for field in ("pros", "cons", "shouldBuy", "shouldNotBuy"):
+                value = data.get(field, [])
+                if isinstance(value, list) and len(value) > MAX_LIST_ITEMS:
+                    self.send_json(
+                        {
+                            "error":
+                            f"{field} çok fazla öğe içeriyor (maks. {MAX_LIST_ITEMS})."
+                        },
+                        400
+                    )
+                    return
+
+            specs = data.get("specs", {})
+            if isinstance(specs, dict) and len(specs) > MAX_LIST_ITEMS:
+                self.send_json(
+                    {
+                        "error":
+                        f"specs çok fazla öğe içeriyor (maks. {MAX_LIST_ITEMS})."
+                    },
+                    400
+                )
+                return
 
             rating = float(data["rating"])
 
@@ -931,6 +1028,13 @@ class BurakReviewServer(SimpleHTTPRequestHandler):
                 self.send_json(
                     {"error": "Veri gönderilmedi."},
                     400
+                )
+                return
+
+            if content_length > 1024:
+                self.send_json(
+                    {"error": "İstek çok büyük."},
+                    413
                 )
                 return
 

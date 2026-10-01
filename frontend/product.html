@@ -67,15 +67,28 @@
 
 <body>
 
+<a href="#main-content" class="skip-link">İçeriğe geç</a>
+
 <header>
 
     <div class="nav">
 
-        <a href="index.html" class="logo">
+        <a href="index.html" class="logo" aria-label="Burak Review ana sayfa">
             BR <span>Burak Review</span>
         </a>
 
-        <nav>
+        <button
+            class="nav-toggle"
+            aria-label="Menüyü aç/kapat"
+            aria-expanded="false"
+            aria-controls="mainNav"
+        >
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+
+        <nav id="mainNav" aria-label="Ana menü">
 
             <a href="index.html#urunler">
                 Ürünler
@@ -96,7 +109,7 @@
 </header>
 
 
-<main>
+<main id="main-content">
 
     <section
         id="productContent"

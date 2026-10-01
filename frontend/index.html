@@ -43,11 +43,24 @@
 
 <body>
 
+<a href="#main-content" class="skip-link">İçeriğe geç</a>
+
 <header>
     <div class="nav">
-        <div class="logo">BR <span>Burak Review</span></div>
+        <a href="index.html" class="logo" aria-label="Burak Review ana sayfa">BR <span>Burak Review</span></a>
 
-        <nav>
+        <button
+            class="nav-toggle"
+            aria-label="Menüyü aç/kapat"
+            aria-expanded="false"
+            aria-controls="mainNav"
+        >
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+
+        <nav id="mainNav" aria-label="Ana menü">
             <a href="#urunler">Ürünler</a>
             <a href="#kategoriler">Kategoriler</a>
             <a href="#hakkimizda">Hakkımızda</a>
@@ -55,7 +68,7 @@
     </div>
 </header>
 
-<main>
+<main id="main-content">
 
     <section class="hero">
         <div class="hero-content">
@@ -76,6 +89,7 @@
                 id="searchInput"
                 type="search"
                 placeholder="🔎 Ürün ara..."
+                aria-label="Ürün ara"
             >
 
         </div>
@@ -88,12 +102,12 @@
 
         <div class="categories">
 
-            <button data-category="Tümü">✨ Tümü</button>
-            <button data-category="Kulaklık">🎧 Kulaklık</button>
-            <button data-category="Klavye">⌨️ Klavye</button>
-            <button data-category="Mouse">🖱️ Mouse</button>
-            <button data-category="Telefon">📱 Telefon</button>
-            <button data-category="Laptop">💻 Laptop</button>
+            <button data-category="Tümü" aria-label="Tüm ürünleri göster">✨ Tümü</button>
+            <button data-category="Kulaklık" aria-label="Kulaklık kategorisi">🎧 Kulaklık</button>
+            <button data-category="Klavye" aria-label="Klavye kategorisi">⌨️ Klavye</button>
+            <button data-category="Mouse" aria-label="Mouse kategorisi">🖱️ Mouse</button>
+            <button data-category="Telefon" aria-label="Telefon kategorisi">📱 Telefon</button>
+            <button data-category="Laptop" aria-label="Laptop kategorisi">💻 Laptop</button>
 
         </div>
 
