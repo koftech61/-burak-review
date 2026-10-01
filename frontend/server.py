@@ -1,12 +1,14 @@
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs, quote
 import json
 import os
+import re
 import base64
 import time
 import hmac
 import hashlib
 import urllib.error
+import urllib.parse
 import urllib.request
 from http import cookies
 
@@ -16,6 +18,11 @@ HOST = "0.0.0.0"
 PORT = int(os.environ.get("PORT", "8765"))
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+SITE_URL = os.environ.get(
+    "SITE_URL",
+    "https://burak-review.onrender.com"
+).rstrip("/")
 
 SESSION_COOKIE = "br_admin"
 SESSION_DURATION = 60 * 60 * 4
@@ -411,7 +418,285 @@ class BurakReviewServer(SimpleHTTPRequestHandler):
 
             return
 
+        if path == "/robots.txt":
+            self.send_text(self.build_robots())
+            return
+
+        if path == "/sitemap.xml":
+            self.send_xml(self.build_sitemap())
+            return
+
+        if path in ("/product.html", "/urun"):
+            query = parse_qs(urlparse(self.path).query)
+            slug = (query.get("urun") or [""])[0].strip()
+
+            if slug:
+                self.send_product_page(slug)
+                return
+
         super().do_GET()
+
+    def send_text(self, text):
+        body = text.encode("utf-8")
+
+        self.send_response(200)
+        self.send_header("Content-Type", "text/plain; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def send_xml(self, text):
+        body = text.encode("utf-8")
+
+        self.send_response(200)
+        self.send_header("Content-Type", "application/xml; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def build_robots(self):
+        return (
+            "User-agent: *\n"
+            "Allow: /\n"
+            "Disallow: /admin.html\n"
+            "Disallow: /admin-login.html\n"
+            "Disallow: /api/\n"
+            f"\nSitemap: {SITE_URL}/sitemap.xml\n"
+        )
+
+    def build_sitemap(self):
+        try:
+            products = supabase_client.list_products()
+        except Exception as error:
+            print("SITEMAP ERROR:", error)
+            products = []
+
+        entries = [
+            (f"{SITE_URL}/", "1.0", "daily")
+        ]
+
+        for product in products:
+            slug = quote(str(product.get("slug", "")), safe="")
+
+            if not slug:
+                continue
+
+            entries.append((
+                f"{SITE_URL}/product.html?urun={slug}",
+                "0.8",
+                "weekly"
+            ))
+
+        lines = [
+            '<?xml version="1.0" encoding="UTF-8"?>',
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+        ]
+
+        for loc, priority, frequency in entries:
+            lines.append(
+                "  <url>"
+                f"<loc>{loc}</loc>"
+                f"<changefreq>{frequency}</changefreq>"
+                f"<priority>{priority}</priority>"
+                "</url>"
+            )
+
+        lines.append("</urlset>")
+
+        return "\n".join(lines)
+
+    def send_product_page(self, slug):
+        path = os.path.join(BASE_DIR, "product.html")
+
+        try:
+            with open(path, "r", encoding="utf-8") as page_file:
+                html = page_file.read()
+        except OSError:
+            self.send_error(404)
+            return
+
+        try:
+            products = supabase_client.list_products()
+        except Exception as error:
+            print("PRERENDER ERROR:", error)
+            products = []
+
+        product = next(
+            (
+                item
+                for item in products
+                if str(item.get("slug", "")).strip() == slug
+            ),
+            None
+        )
+
+        if product:
+            html = self.render_product_seo(html, product, slug)
+
+        body = html.encode("utf-8")
+
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def render_product_seo(self, html, product, slug):
+        name = product.get("name", "")
+        brand = product.get("brand", "")
+        description = (
+            product.get("description")
+            or f"{name} teknik özellikleri, artıları, eksileri ve Burak Review değerlendirmesi."
+        )
+        description = re.sub(r"\s+", " ", str(description)).strip()[:160]
+
+        title = f"{name} İncelemesi | Burak Review"
+        canonical = (
+            f"{SITE_URL}/product.html?urun={quote(str(slug), safe='')}"
+        )
+
+        image = product.get("image") or f"{SITE_URL}/og-image.jpg"
+
+        if not str(image).lower().startswith("http"):
+            image = f"{SITE_URL}/{str(image).lstrip('/')}"
+
+        specs = (
+            product.get("specs")
+            if isinstance(product.get("specs"), dict)
+            else {}
+        )
+
+        structured = {
+            "@context": "https://schema.org",
+            "@type": "Product",
+            "name": name,
+            "description": product.get("description") or "",
+            "category": product.get("category") or "",
+            "url": canonical,
+            "brand": {"@type": "Brand", "name": brand},
+            "image": [image],
+            "additionalProperty": [
+                {
+                    "@type": "PropertyValue",
+                    "name": key,
+                    "value": str(value)
+                }
+                for key, value in specs.items()
+            ]
+        }
+
+        try:
+            rating = float(product.get("rating") or 0)
+        except (TypeError, ValueError):
+            rating = 0
+
+        if rating > 0:
+            structured["review"] = {
+                "@type": "Review",
+                "reviewRating": {
+                    "@type": "Rating",
+                    "ratingValue": rating,
+                    "bestRating": 5,
+                    "worstRating": 0
+                },
+                "author": {
+                    "@type": "Organization",
+                    "name": "Burak Review"
+                },
+                "reviewBody": (
+                    product.get("finalVerdict")
+                    or product.get("verdict")
+                    or ""
+                )
+            }
+
+        def replace(pattern, replacement, source):
+            return re.sub(
+                pattern,
+                lambda match: replacement,
+                source,
+                count=1
+            )
+
+        html = replace(
+            r"<title>.*?</title>",
+            f"<title>{title}</title>",
+            html
+        )
+
+        html = replace(
+            r'<meta\s+name="description"\s+content="[^"]*"\s*/?>',
+            f'<meta name="description" content="{self.escape(description)}">',
+            html
+        )
+
+        html = replace(
+            r'<link\s+rel="canonical"\s+href="[^"]*"\s*/?>',
+            f'<link rel="canonical" href="{self.escape(canonical)}">',
+            html
+        )
+
+        html = replace(
+            r'<meta\s+property="og:title"\s+content="[^"]*"\s*/?>',
+            f'<meta property="og:title" content="{self.escape(title)}">',
+            html
+        )
+
+        html = replace(
+            r'<meta\s+property="og:description"\s+content="[^"]*"\s*/?>',
+            f'<meta property="og:description" content="{self.escape(description)}">',
+            html
+        )
+
+        html = replace(
+            r'<meta\s+property="og:url"\s+content="[^"]*"\s*/?>',
+            f'<meta property="og:url" content="{self.escape(canonical)}">',
+            html
+        )
+
+        html = replace(
+            r'<meta\s+property="og:image"\s+content="[^"]*"\s*/?>',
+            f'<meta property="og:image" content="{self.escape(image)}">',
+            html
+        )
+
+        html = replace(
+            r'<meta\s+name="twitter:title"\s+content="[^"]*"\s*/?>',
+            f'<meta name="twitter:title" content="{self.escape(title)}">',
+            html
+        )
+
+        html = replace(
+            r'<meta\s+name="twitter:description"\s+content="[^"]*"\s*/?>',
+            f'<meta name="twitter:description" content="{self.escape(description)}">',
+            html
+        )
+
+        html = replace(
+            r'<meta\s+name="twitter:image"\s+content="[^"]*"\s*/?>',
+            f'<meta name="twitter:image" content="{self.escape(image)}">',
+            html
+        )
+
+        script = (
+            '<script type="application/ld+json">'
+            + json.dumps(structured, ensure_ascii=False)
+            + "</script>"
+        )
+
+        html = html.replace("</head>", f"    {script}\n</head>", 1)
+
+        return html
+
+    @staticmethod
+    def escape(value):
+        return (
+            str(value)
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace('"', "&quot;")
+        )
 
     def handle_logout(self):
         self.send_response(200)

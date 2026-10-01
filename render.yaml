@@ -15,5 +15,7 @@ services:
         sync: false
       - key: SUPABASE_ANON_KEY
         sync: false
+      - key: SITE_URL
+        sync: false
     healthCheckPath: /api/products
     autoDeploy: true

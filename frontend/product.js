@@ -9,6 +9,12 @@ const content = document.getElementById("productContent");
 function showNotFound() {
     content.style.display = "none";
     notFound.style.display = "block";
+
+    const robots = document.querySelector('meta[name="robots"]');
+
+    if (robots) {
+        robots.setAttribute("content", "noindex, follow");
+    }
 }
 
 function createStars(rating) {
@@ -30,6 +36,123 @@ function fillList(id, items) {
         li.textContent = item;
         list.appendChild(li);
     });
+}
+
+function setMeta(selector, content) {
+    const element = document.querySelector(selector);
+
+    if (element && content) {
+        element.setAttribute("content", content);
+    }
+}
+
+function setLink(rel, href) {
+    const element = document.querySelector(`link[rel="${rel}"]`);
+
+    if (element && href) {
+        element.setAttribute("href", href);
+    }
+}
+
+function absoluteUrl(value) {
+    if (!value) {
+        return "";
+    }
+
+    if (/^https?:\/\//i.test(value)) {
+        return value;
+    }
+
+    return `${window.location.origin}/${String(value).replace(/^\/+/, "")}`;
+}
+
+function updateSeo(product) {
+    const origin = window.location.origin;
+
+    const canonical =
+        `${origin}/product.html?urun=${encodeURIComponent(slug)}`;
+
+    const title =
+        `${product.name} İncelemesi | Burak Review`;
+
+    const description = (
+        product.description ||
+        `${product.name} teknik özellikleri, artıları, eksileri ve Burak Review değerlendirmesi.`
+    ).slice(0, 160);
+
+    const image = absoluteUrl(product.image) || `${origin}/og-image.jpg`;
+
+    document.title = title;
+
+    setMeta('meta[name="description"]', description);
+    setMeta('meta[property="og:title"]', title);
+    setMeta('meta[property="og:description"]', description);
+    setMeta('meta[property="og:url"]', canonical);
+    setMeta('meta[property="og:image"]', image);
+    setMeta('meta[property="og:image:alt"]', `${product.brand} ${product.name}`);
+    setMeta('meta[name="twitter:title"]', title);
+    setMeta('meta[name="twitter:description"]', description);
+    setMeta('meta[name="twitter:image"]', image);
+
+    setLink("canonical", canonical);
+}
+
+function injectStructuredData(product) {
+    const origin = window.location.origin;
+
+    const image = absoluteUrl(product.image);
+
+    const specs =
+        product.specs && typeof product.specs === "object"
+            ? product.specs
+            : {};
+
+    const data = {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": product.name,
+        "description": product.description || undefined,
+        "category": product.category || undefined,
+        "url": `${origin}/product.html?urun=${encodeURIComponent(slug)}`,
+        "brand": product.brand
+            ? { "@type": "Brand", "name": product.brand }
+            : undefined,
+        "image": image ? [image] : undefined,
+        "additionalProperty": Object.entries(specs).map(([name, value]) => ({
+            "@type": "PropertyValue",
+            "name": name,
+            "value": String(value)
+        }))
+    };
+
+    const rating = Number(product.rating);
+
+    if (rating > 0) {
+        data.review = {
+            "@type": "Review",
+            "reviewRating": {
+                "@type": "Rating",
+                "ratingValue": rating,
+                "bestRating": 5,
+                "worstRating": 0
+            },
+            "author": {
+                "@type": "Organization",
+                "name": "Burak Review"
+            },
+            "reviewBody":
+                product.finalVerdict ||
+                product.verdict ||
+                undefined
+        };
+    }
+
+    const script = document.createElement("script");
+
+    script.type = "application/ld+json";
+    script.textContent = JSON.stringify(data);
+
+    document.head.appendChild(script);
 }
 
 async function loadProduct() {
@@ -79,20 +202,8 @@ async function loadProduct() {
             product.name
         );
 
-        document.title =
-            `${product.name} İncelemesi | Burak Review`;
-
-        const metaDescription =
-            document.querySelector(
-                'meta[name="description"]'
-            );
-
-        if (metaDescription) {
-            metaDescription.setAttribute(
-                "content",
-                `${product.name} teknik özellikleri, artıları, eksileri ve Burak Review değerlendirmesi.`
-            );
-        }
+        updateSeo(product);
+        injectStructuredData(product);
 
         document.getElementById(
             "detailCategory"
