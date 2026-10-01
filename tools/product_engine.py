@@ -5,7 +5,6 @@ from pathlib import Path
 from datetime import datetime
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-PRODUCTS_FILE = BASE_DIR / "frontend" / "data" / "products.json"
 RESEARCH_DIR = BASE_DIR / "tools" / "research"
 
 

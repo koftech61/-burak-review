@@ -6,7 +6,6 @@ from urllib.parse import quote
 
 
 ROOT = Path(__file__).resolve().parent.parent
-PRODUCTS_FILE = ROOT / "frontend" / "data" / "products.json"
 
 
 BRANDS = [

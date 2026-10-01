@@ -1,4 +1,3 @@
-import json
 import re
 import sys
 from pathlib import Path
@@ -6,7 +5,10 @@ from datetime import datetime
 
 
 ROOT = Path(__file__).resolve().parent.parent
-PRODUCTS_FILE = ROOT / "frontend" / "data" / "products.json"
+
+sys.path.insert(0, str(ROOT / "frontend"))
+
+import supabase_client
 
 
 def slugify(text):
@@ -18,16 +20,7 @@ def slugify(text):
 
 
 def load_products():
-    if not PRODUCTS_FILE.exists():
-        return []
-
-    with PRODUCTS_FILE.open("r", encoding="utf-8") as f:
-        data = json.load(f)
-
-    if not isinstance(data, list):
-        raise ValueError("products.json bir liste olmalı.")
-
-    return data
+    return supabase_client.list_products()
 
 
 def guess_category(name):
@@ -170,21 +163,33 @@ def main():
 
     print_preview(product)
 
-    answer = input("Taslak olarak products.json'a eklensin mi? [e/h]: ").strip().lower()
+    answer = input("Taslak olarak Supabase kataloğuna eklensin mi? [e/h]: ").strip().lower()
 
     if answer not in ("e", "evet"):
         print("❌ İşlem iptal edildi.")
         return
 
-    products.append(product)
-
-    with PRODUCTS_FILE.open("w", encoding="utf-8") as f:
-        json.dump(products, f, ensure_ascii=False, indent=2)
+    supabase_client.insert_product({
+        "slug": product["slug"],
+        "brand": product["brand"],
+        "name": product["name"],
+        "category": product["category"],
+        "image": product.get("image", ""),
+        "rating": product.get("rating", 0),
+        "verdict": product.get("verdict", ""),
+        "price": product.get("price", ""),
+        "description": product.get("description", ""),
+        "pros": product.get("pros", []),
+        "cons": product.get("cons", []),
+        "shouldBuy": product.get("shouldBuy", []),
+        "shouldNotBuy": product.get("shouldNotBuy", []),
+        "specs": product.get("specs", {}),
+        "finalVerdict": ""
+    })
 
     print()
-    print("✅ Ürün taslak olarak eklendi.")
-    print(f"📁 {PRODUCTS_FILE}")
-    print(f"📊 Toplam ürün: {len(products)}")
+    print("✅ Ürün taslak olarak Supabase kataloğuna eklendi.")
+    print(f"📊 Toplam ürün: {len(products) + 1}")
 
 
 if __name__ == "__main__":

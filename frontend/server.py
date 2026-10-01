@@ -1,10 +1,8 @@
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse
-import sqlite3
 import json
 import os
 import base64
-import uuid
 import time
 import hmac
 from http import cookies
@@ -16,111 +14,12 @@ from auth import (
     get_session,
     delete_session,
 )
+import supabase_client
 
 HOST = "0.0.0.0"
 PORT = int(os.environ.get("PORT", "8765"))
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "data", "products.db")
-PRODUCTS_JSON = os.path.join(BASE_DIR, "data", "products.json")
-IMAGES_DIR = os.path.join(BASE_DIR, "images")
-
-os.makedirs(IMAGES_DIR, exist_ok=True)
-os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-
-
-def get_db():
-    db = sqlite3.connect(DB_PATH)
-    db.row_factory = sqlite3.Row
-    return db
-
-
-def init_db():
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-
-    db = sqlite3.connect(DB_PATH)
-
-    db.execute(
-        """
-        CREATE TABLE IF NOT EXISTS products (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            slug TEXT NOT NULL,
-            brand TEXT NOT NULL,
-            name TEXT NOT NULL,
-            category TEXT NOT NULL,
-            image TEXT,
-            rating REAL NOT NULL,
-            verdict TEXT,
-            price TEXT,
-            description TEXT,
-            pros TEXT,
-            cons TEXT,
-            should_buy TEXT,
-            should_not_buy TEXT,
-            specs TEXT,
-            final_verdict TEXT
-        )
-        """
-    )
-
-    if db.execute("SELECT COUNT(*) FROM products").fetchone()[0] == 0:
-        if os.path.exists(PRODUCTS_JSON):
-            with open(PRODUCTS_JSON, "r", encoding="utf-8") as f:
-                products = json.load(f)
-
-            for data in products:
-                db.execute(
-                    """
-                    INSERT INTO products (
-                        slug, brand, name, category, image,
-                        rating, verdict, price, description,
-                        pros, cons, should_buy, should_not_buy,
-                        specs, final_verdict
-                    )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    (
-                        data["slug"],
-                        data["brand"],
-                        data["name"],
-                        data["category"],
-                        data.get("image", ""),
-                        data["rating"],
-                        data.get("verdict", ""),
-                        data.get("price", ""),
-                        data.get("description", ""),
-                        json.dumps(data.get("pros", []), ensure_ascii=False),
-                        json.dumps(data.get("cons", []), ensure_ascii=False),
-                        json.dumps(data.get("shouldBuy", []), ensure_ascii=False),
-                        json.dumps(data.get("shouldNotBuy", []), ensure_ascii=False),
-                        json.dumps(data.get("specs", {}), ensure_ascii=False),
-                        data.get("finalVerdict", "")
-                    )
-                )
-
-    db.commit()
-    db.close()
-
-
-def row_to_product(row):
-    return {
-        "id": row["id"],
-        "slug": row["slug"],
-        "brand": row["brand"],
-        "name": row["name"],
-        "category": row["category"],
-        "image": row["image"],
-        "rating": row["rating"],
-        "verdict": row["verdict"],
-        "price": row["price"],
-        "description": row["description"],
-        "pros": json.loads(row["pros"] or "[]"),
-        "cons": json.loads(row["cons"] or "[]"),
-        "shouldBuy": json.loads(row["should_buy"] or "[]"),
-        "shouldNotBuy": json.loads(row["should_not_buy"] or "[]"),
-        "specs": json.loads(row["specs"] or "{}"),
-        "finalVerdict": row["final_verdict"]
-    }
 
 
 LOGIN_FAILURES = {}
@@ -352,18 +251,7 @@ class BurakReviewServer(SimpleHTTPRequestHandler):
 
         if path == "/api/products":
             try:
-                db = get_db()
-
-                rows = db.execute(
-                    "SELECT * FROM products ORDER BY id DESC"
-                ).fetchall()
-
-                db.close()
-
-                products = [
-                    row_to_product(row)
-                    for row in rows
-                ]
+                products = supabase_client.list_products()
 
                 self.send_json(products)
 
@@ -509,17 +397,19 @@ class BurakReviewServer(SimpleHTTPRequestHandler):
                     header, encoded = image_data.split(",", 1)
 
                     mime_map = {
-                        "data:image/jpeg;base64": ".jpg",
-                        "data:image/png;base64": ".png",
-                        "data:image/webp;base64": ".webp"
+                        "data:image/jpeg;base64": (".jpg", "image/jpeg"),
+                        "data:image/png;base64": (".png", "image/png"),
+                        "data:image/webp;base64": (".webp", "image/webp")
                     }
 
-                    extension = mime_map.get(header.lower())
+                    mime_entry = mime_map.get(header.lower())
 
-                    if not extension:
+                    if not mime_entry:
                         raise ValueError(
                             "Sadece JPG, PNG veya WebP yüklenebilir."
                         )
+
+                    extension, content_type = mime_entry
 
                     raw_image = base64.b64decode(
                         encoded,
@@ -531,21 +421,12 @@ class BurakReviewServer(SimpleHTTPRequestHandler):
                             "Fotoğraf 5 MB'dan büyük olamaz."
                         )
 
-                    filename = (
-                        f"{data['slug']}-"
-                        f"{uuid.uuid4().hex[:8]}"
-                        f"{extension}"
+                    image_path = supabase_client.upload_image(
+                        data["slug"],
+                        raw_image,
+                        extension,
+                        content_type
                     )
-
-                    filepath = os.path.join(
-                        IMAGES_DIR,
-                        filename
-                    )
-
-                    with open(filepath, "wb") as image_file:
-                        image_file.write(raw_image)
-
-                    image_path = f"images/{filename}"
 
                 except Exception as image_error:
                     self.send_json(
@@ -557,91 +438,32 @@ class BurakReviewServer(SimpleHTTPRequestHandler):
                     )
                     return
 
-            db = get_db()
-
-            db.execute(
-                """
-                INSERT INTO products (
-                    slug,
-                    brand,
-                    name,
-                    category,
-                    image,
-                    rating,
-                    verdict,
-                    price,
-                    description,
-                    pros,
-                    cons,
-                    should_buy,
-                    should_not_buy,
-                    specs,
-                    final_verdict
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    data["slug"],
-                    data["brand"],
-                    data["name"],
-                    data["category"],
-                    image_path,
-                    rating,
-                    data.get("verdict", ""),
-                    data.get("price", ""),
-                    data.get("description", ""),
-                    json.dumps(
-                        data.get("pros", []),
-                        ensure_ascii=False
-                    ),
-                    json.dumps(
-                        data.get("cons", []),
-                        ensure_ascii=False
-                    ),
-                    json.dumps(
-                        data.get("shouldBuy", []),
-                        ensure_ascii=False
-                    ),
-                    json.dumps(
-                        data.get("shouldNotBuy", []),
-                        ensure_ascii=False
-                    ),
-                    json.dumps(
-                        data.get("specs", {}),
-                        ensure_ascii=False
-                    ),
-                    data.get(
-                        "finalVerdict",
-                        ""
-                    )
-                )
-            )
-
-            db.commit()
-
-            product_id = db.execute(
-                "SELECT last_insert_rowid()"
-            ).fetchone()[0]
-
-            db.close()
+            saved = supabase_client.insert_product({
+                "slug": data["slug"],
+                "brand": data["brand"],
+                "name": data["name"],
+                "category": data["category"],
+                "image": image_path,
+                "rating": rating,
+                "verdict": data.get("verdict", ""),
+                "price": data.get("price", ""),
+                "description": data.get("description", ""),
+                "pros": data.get("pros", []),
+                "cons": data.get("cons", []),
+                "shouldBuy": data.get("shouldBuy", []),
+                "shouldNotBuy": data.get("shouldNotBuy", []),
+                "specs": data.get("specs", {}),
+                "finalVerdict": data.get("finalVerdict", "")
+            })
 
             self.send_json(
                 {
                     "success": True,
                     "message":
                     "Ürün başarıyla kaydedildi.",
-                    "id": product_id
+                    "id": saved["id"]
                 },
                 201
-            )
-
-        except sqlite3.IntegrityError:
-            self.send_json(
-                {
-                    "error":
-                    "Bu ürün zaten mevcut."
-                },
-                409
             )
 
         except json.JSONDecodeError:
@@ -665,7 +487,6 @@ class BurakReviewServer(SimpleHTTPRequestHandler):
             )
 
 
-init_db()
 os.chdir(BASE_DIR)
 
 server = ThreadingHTTPServer(
