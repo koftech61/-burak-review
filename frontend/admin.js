@@ -1,6 +1,4 @@
-// 🔐 BURAK REVIEW ADMIN AUTH
-let csrfToken = sessionStorage.getItem("burak_review_csrf") || "";
-
+// 🔐 BURAK REVIEW ADMIN AUTH (Supabase Auth oturumu)
 async function checkAdminAuth() {
     try {
         const response = await fetch("/api/auth/me", {
@@ -21,13 +19,6 @@ async function checkAdminAuth() {
             return false;
         }
 
-        csrfToken = sessionStorage.getItem("burak_review_csrf") || "";
-
-        if (!csrfToken) {
-            window.location.href = "/admin-login.html";
-            return false;
-        }
-
         return true;
     } catch (error) {
         console.error("Admin doğrulama hatası:", error);
@@ -42,29 +33,15 @@ const logoutButton = document.getElementById("logoutButton");
 if (logoutButton) {
     logoutButton.addEventListener("click", async () => {
         try {
-            const response = await fetch(
-                "/api/auth/logout",
-                {
-                    method: "POST",
-                    credentials: "same-origin",
-                    headers: {
-                        "X-CSRF-Token": csrfToken
-                    }
-                }
-            );
-
-            sessionStorage.removeItem("burak_review_csrf");
-
-            if (!response.ok) {
-                console.error("Logout başarısız.");
-            }
-
-            window.location.href = "/admin-login.html";
+            await fetch("/api/auth/logout", {
+                method: "POST",
+                credentials: "same-origin"
+            });
         } catch (error) {
             console.error("Logout hatası:", error);
-            sessionStorage.removeItem("burak_review_csrf");
-            window.location.href = "/admin-login.html";
         }
+
+        window.location.href = "/admin-login.html";
     });
 }
 
@@ -81,7 +58,12 @@ const imageInput = document.getElementById("productImage");
 const imagePreview = document.getElementById("imagePreview");
 const message = document.getElementById("adminMessage");
 
+const listContainer = document.getElementById("adminProductList");
+const cancelEditButton = document.getElementById("cancelEdit");
+const submitButton = form.querySelector('button[type="submit"]');
+
 let selectedImage = null;
+let editingId = null;
 
 
 function createSlug(text) {
@@ -99,7 +81,7 @@ function createSlug(text) {
 }
 
 
-function addPro() {
+function addPro(value = "") {
     const row = document.createElement("div");
     row.className = "dynamic-row";
 
@@ -116,6 +98,8 @@ function addPro() {
         >×</button>
     `;
 
+    row.querySelector(".pro-input").value = value;
+
     row.querySelector(".remove-row").addEventListener(
         "click",
         () => row.remove()
@@ -125,7 +109,7 @@ function addPro() {
 }
 
 
-function addCon() {
+function addCon(value = "") {
     const row = document.createElement("div");
     row.className = "dynamic-row";
 
@@ -142,6 +126,8 @@ function addCon() {
         >×</button>
     `;
 
+    row.querySelector(".con-input").value = value;
+
     row.querySelector(".remove-row").addEventListener(
         "click",
         () => row.remove()
@@ -151,7 +137,7 @@ function addCon() {
 }
 
 
-function addSpec() {
+function addSpec(name = "", value = "") {
     const row = document.createElement("div");
     row.className = "spec-editor-row";
 
@@ -172,6 +158,9 @@ function addSpec() {
             aria-label="Özelliği sil"
         >×</button>
     `;
+
+    row.querySelector(".spec-name").value = name;
+    row.querySelector(".spec-value").value = value;
 
     row.querySelector(".remove-row").addEventListener(
         "click",
@@ -196,12 +185,11 @@ imageInput.addEventListener("change", () => {
     const reader = new FileReader();
 
     reader.onload = (event) => {
-        imagePreview.innerHTML = `
-            <img
-                src="${event.target.result}"
-                alt="Ürün önizleme"
-            >
-        `;
+        imagePreview.innerHTML = "";
+        const img = document.createElement("img");
+        img.src = event.target.result;
+        img.alt = "Ürün önizleme";
+        imagePreview.appendChild(img);
     };
 
     reader.readAsDataURL(file);
@@ -274,15 +262,9 @@ function collectProductData() {
             .getElementById("productCategory")
             .value,
 
-        image: selectedImage
-            ? selectedImage.name
-            : "",
+        image: "",
 
         imageData: null,
-
-        imageName: selectedImage
-            ? selectedImage.name
-            : "",
 
         rating: Number(
             document
@@ -319,6 +301,214 @@ function collectProductData() {
 }
 
 
+function resetForm() {
+    form.reset();
+
+    selectedImage = null;
+    imagePreview.innerHTML = "";
+
+    prosContainer.innerHTML = "";
+    consContainer.innerHTML = "";
+    specsContainer.innerHTML = "";
+
+    addPro();
+    addPro();
+    addCon();
+    addCon();
+    addSpec();
+    addSpec();
+}
+
+
+function setEditing(product) {
+    editingId = product.id;
+
+    document.getElementById("productName").value = product.name || "";
+    document.getElementById("productBrand").value = product.brand || "";
+    document.getElementById("productCategory").value = product.category || "";
+    document.getElementById("productRating").value = product.rating ?? "";
+    document.getElementById("productPrice").value = product.price || "";
+    document.getElementById("productDescription").value = product.description || "";
+    document.getElementById("productVerdict").value = product.verdict || "";
+    document.getElementById("finalVerdict").value = product.finalVerdict || "";
+
+    document.getElementById("shouldBuy").value =
+        (product.shouldBuy || []).join("\n");
+
+    document.getElementById("shouldNotBuy").value =
+        (product.shouldNotBuy || []).join("\n");
+
+    prosContainer.innerHTML = "";
+    (product.pros && product.pros.length ? product.pros : [""])
+        .forEach(item => addPro(item));
+
+    consContainer.innerHTML = "";
+    (product.cons && product.cons.length ? product.cons : [""])
+        .forEach(item => addCon(item));
+
+    specsContainer.innerHTML = "";
+    const specs = product.specs || {};
+    const specEntries = Object.entries(specs);
+
+    if (specEntries.length) {
+        specEntries.forEach(([name, value]) => addSpec(name, value));
+    } else {
+        addSpec();
+    }
+
+    imagePreview.innerHTML = "";
+    if (product.image) {
+        const img = document.createElement("img");
+        img.src = product.image;
+        img.alt = "Ürün önizleme";
+        imagePreview.appendChild(img);
+    }
+
+    submitButton.textContent = "💾 Değişiklikleri kaydet";
+    cancelEditButton.style.display = "inline-flex";
+
+    message.textContent = `✏️ Düzenleniyor: ${product.name}`;
+    message.classList.add("show");
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+
+function exitEditMode() {
+    editingId = null;
+    resetForm();
+
+    submitButton.textContent = "🚀 Ürünü hazırla";
+    cancelEditButton.style.display = "none";
+
+    message.classList.remove("show");
+}
+
+
+async function deleteProduct(product) {
+    const confirmed = window.confirm(
+        `"${product.name}" ürününü silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        const response = await fetch("/api/products", {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            credentials: "same-origin",
+            body: JSON.stringify({ id: product.id })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.error || "Ürün silinemedi.");
+        }
+
+        if (editingId === product.id) {
+            exitEditMode();
+        }
+
+        message.textContent = "🗑️ Ürün silindi.";
+        message.classList.add("show");
+
+        await loadProducts();
+
+    } catch (error) {
+        console.error("❌ SİLME HATASI:", error);
+        message.textContent = "❌ Ürün silinemedi: " + error.message;
+        message.classList.add("show");
+    }
+}
+
+
+function renderProductList(products) {
+    listContainer.innerHTML = "";
+
+    if (!products.length) {
+        const empty = document.createElement("p");
+        empty.className = "admin-list-empty";
+        empty.textContent = "Henüz ürün yok.";
+        listContainer.appendChild(empty);
+        return;
+    }
+
+    products.forEach(product => {
+        const row = document.createElement("div");
+        row.className = "admin-list-row";
+
+        const info = document.createElement("div");
+        info.className = "admin-list-info";
+
+        const title = document.createElement("strong");
+        title.textContent = product.name;
+
+        const meta = document.createElement("span");
+        meta.textContent = `${product.brand} • ${product.category} • ${product.rating}/5`;
+
+        info.appendChild(title);
+        info.appendChild(meta);
+
+        const actions = document.createElement("div");
+        actions.className = "admin-list-actions";
+
+        const editButton = document.createElement("button");
+        editButton.type = "button";
+        editButton.className = "admin-secondary-btn";
+        editButton.textContent = "Düzenle";
+        editButton.addEventListener("click", () => setEditing(product));
+
+        const deleteButton = document.createElement("button");
+        deleteButton.type = "button";
+        deleteButton.className = "admin-danger-btn";
+        deleteButton.textContent = "Sil";
+        deleteButton.addEventListener("click", () => deleteProduct(product));
+
+        actions.appendChild(editButton);
+        actions.appendChild(deleteButton);
+
+        row.appendChild(info);
+        row.appendChild(actions);
+
+        listContainer.appendChild(row);
+    });
+}
+
+
+async function loadProducts() {
+    try {
+        const response = await fetch("/api/products", {
+            cache: "no-store"
+        });
+
+        if (!response.ok) {
+            throw new Error(`Ürünler alınamadı: ${response.status}`);
+        }
+
+        const products = await response.json();
+
+        if (!Array.isArray(products)) {
+            throw new Error("Ürün listesi geçersiz.");
+        }
+
+        renderProductList(products);
+
+    } catch (error) {
+        console.error("❌ ÜRÜN LİSTESİ HATASI:", error);
+        listContainer.innerHTML = "";
+        const empty = document.createElement("p");
+        empty.className = "admin-list-empty";
+        empty.textContent = "Ürünler yüklenemedi.";
+        listContainer.appendChild(empty);
+    }
+}
+
+
 document
     .getElementById("previewProduct")
     .addEventListener("click", () => {
@@ -335,6 +525,9 @@ document
 
         message.classList.add("show");
     });
+
+
+cancelEditButton.addEventListener("click", exitEditMode);
 
 
 async function fileToDataURL(file) {
@@ -359,23 +552,47 @@ form.addEventListener("submit", async (event) => {
             await fileToDataURL(selectedImage);
     }
 
+    const wasEditing = Boolean(editingId);
+
     message.textContent =
         "⏳ Ürün kaydediliyor...";
 
     message.classList.add("show");
 
     try {
+        if (editingId) {
+            const deleteResponse = await fetch(
+                "/api/products",
+                {
+                    method: "DELETE",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    credentials: "same-origin",
+                    body: JSON.stringify({ id: editingId })
+                }
+            );
+
+            if (!deleteResponse.ok) {
+                const detail = await deleteResponse
+                    .json()
+                    .catch(() => ({}));
+                throw new Error(
+                    detail.error || "Güncelleme başarısız."
+                );
+            }
+        }
+
         const response = await fetch(
             "/api/products",
             {
                 method: "POST",
 
                 headers: {
-                    "Content-Type":
-                        "application/json",
-                    "X-CSRF-Token":
-                        csrfToken
+                    "Content-Type": "application/json"
                 },
+
+                credentials: "same-origin",
 
                 body: JSON.stringify(product)
             }
@@ -396,14 +613,15 @@ form.addEventListener("submit", async (event) => {
             result
         );
 
-        message.textContent =
-            "✅ Ürün başarıyla kaydedildi! Ürün ID: " +
-            result.id;
+        exitEditMode();
 
-        form.reset();
+        message.textContent = wasEditing
+            ? "✅ Ürün güncellendi."
+            : "✅ Ürün başarıyla kaydedildi! Ürün ID: " + result.id;
 
-        selectedImage = null;
-        imagePreview.innerHTML = "";
+        message.classList.add("show");
+
+        await loadProducts();
 
     } catch (error) {
 
@@ -415,34 +633,29 @@ form.addEventListener("submit", async (event) => {
         message.textContent =
             "❌ Ürün kaydedilemedi: " +
             error.message;
+
+        message.classList.add("show");
     }
 });
 
 
 addProButton.addEventListener(
     "click",
-    addPro
+    () => addPro()
 );
 
 addConButton.addEventListener(
     "click",
-    addCon
+    () => addCon()
 );
 
 addSpecButton.addEventListener(
     "click",
-    addSpec
+    () => addSpec()
 );
 
 
-addPro();
-addPro();
-
-addCon();
-addCon();
-
-addSpec();
-addSpec();
+resetForm();
 
 
 console.log(
@@ -450,6 +663,10 @@ console.log(
 );
 
 
-document.addEventListener("DOMContentLoaded", () => {
-    checkAdminAuth();
+document.addEventListener("DOMContentLoaded", async () => {
+    const ok = await checkAdminAuth();
+
+    if (ok) {
+        loadProducts();
+    }
 });

@@ -1414,3 +1414,102 @@ footer {
         width: 100%;
     }
 }
+
+/* ADMIN PRODUCT LIST */
+
+.admin-list-card {
+    margin-bottom: 40px;
+}
+
+.admin-product-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.admin-list-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--bg-soft);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-list-row:hover {
+    border-color: var(--border-hover);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+}
+
+.admin-list-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.admin-list-info strong {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-list-info span {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.admin-list-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.admin-danger-btn {
+    padding: 10px 18px;
+    border: 1px solid rgba(220, 38, 38, 0.25);
+    border-radius: 12px;
+    background: rgba(220, 38, 38, 0.06);
+    color: var(--danger);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.admin-danger-btn:hover {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.admin-list-empty {
+    padding: 20px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+@media (max-width: 600px) {
+    .admin-list-row {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .admin-list-actions {
+        width: 100%;
+    }
+
+    .admin-list-actions button {
+        flex: 1;
+    }
+}

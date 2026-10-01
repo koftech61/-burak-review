@@ -5,15 +5,11 @@ import os
 import base64
 import time
 import hmac
+import hashlib
+import urllib.error
+import urllib.request
 from http import cookies
 
-from auth import (
-    verify_username,
-    verify_password,
-    create_session,
-    get_session,
-    delete_session,
-)
 import supabase_client
 
 HOST = "0.0.0.0"
@@ -21,6 +17,8 @@ PORT = int(os.environ.get("PORT", "8765"))
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+SESSION_COOKIE = "br_admin"
+SESSION_DURATION = 60 * 60 * 4
 
 LOGIN_FAILURES = {}
 MAX_LOGIN_FAILURES = 5
@@ -41,11 +39,14 @@ def is_https(handler):
     )
 
 
-def make_session_cookie(handler, session_id):
+def make_session_cookie(handler, value, max_age=None):
     cookie = (
-        f"br_session={session_id}; "
+        f"{SESSION_COOKIE}={value}; "
         "HttpOnly; Path=/; SameSite=Strict"
     )
+
+    if max_age is not None:
+        cookie += f"; Max-Age={max_age}"
 
     if is_https(handler):
         cookie += "; Secure"
@@ -56,26 +57,97 @@ def make_session_cookie(handler, session_id):
 def get_request_session(handler):
     raw_cookie = handler.headers.get("Cookie", "")
     if not raw_cookie:
-        return None, None
+        return None
 
     parsed = cookies.SimpleCookie()
 
     try:
         parsed.load(raw_cookie)
     except cookies.CookieError:
-        return None, None
+        return None
 
-    morsel = parsed.get("br_session")
+    morsel = parsed.get(SESSION_COOKIE)
     if not morsel:
-        return None, None
+        return None
 
-    session_id = morsel.value
-    session = get_session(session_id)
+    return verify_session_value(morsel.value)
 
-    if not session:
-        return None, None
 
-    return session_id, session
+def sign_session_value(payload_b64):
+    _, key = supabase_client.get_config()
+    return hmac.new(
+        key.encode("utf-8"),
+        payload_b64.encode("utf-8"),
+        hashlib.sha256
+    ).hexdigest()
+
+
+def build_session_value(access_token, refresh_token):
+    payload = json.dumps({
+        "access": access_token,
+        "refresh": refresh_token,
+        "issued": time.time()
+    })
+    payload_b64 = base64.urlsafe_b64encode(
+        payload.encode("utf-8")
+    ).decode("ascii")
+
+    signature = sign_session_value(payload_b64)
+
+    return f"{payload_b64}.{signature}"
+
+
+def verify_session_value(value):
+    if not value or "." not in value:
+        return None
+
+    payload_b64, signature = value.rsplit(".", 1)
+    expected = sign_session_value(payload_b64)
+
+    if not hmac.compare_digest(signature, expected):
+        return None
+
+    try:
+        payload = json.loads(
+            base64.urlsafe_b64decode(
+                payload_b64.encode("ascii")
+            ).decode("utf-8")
+        )
+    except (ValueError, json.JSONDecodeError):
+        return None
+
+    if time.time() - payload.get("issued", 0) > SESSION_DURATION:
+        return None
+
+    return payload
+
+
+def supabase_auth_request(path, body):
+    url, key = supabase_client.get_config()
+
+    if not url or not key:
+        raise RuntimeError("Supabase ayarlari eksik.")
+
+    request = urllib.request.Request(
+        f"{url}/auth/v1/{path}",
+        data=json.dumps(body).encode("utf-8"),
+        method="POST"
+    )
+    request.add_header("apikey", key)
+    request.add_header("Content-Type", "application/json")
+
+    with urllib.request.urlopen(request, timeout=30) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+def refresh_session(session):
+    try:
+        return supabase_auth_request(
+            "token?grant_type=refresh_token",
+            {"refresh_token": session.get("refresh", "")}
+        )
+    except Exception:
+        return None
 
 
 def login_allowed(ip):
@@ -107,6 +179,58 @@ def record_login_failure(ip):
 
 def clear_login_failures(ip):
     LOGIN_FAILURES.pop(ip, None)
+
+
+def authenticate(handler):
+    session = get_request_session(handler)
+
+    if not session:
+        return None
+
+    access_token = session.get("access", "")
+
+    try:
+        user = supabase_client.get_user(access_token)
+    except Exception:
+        refreshed = refresh_session(session)
+
+        if not refreshed or not refreshed.get("access_token"):
+            return None
+
+        access_token = refreshed["access_token"]
+
+        handler.send_header(
+            "Set-Cookie",
+            make_session_cookie(
+                handler,
+                build_session_value(
+                    access_token,
+                    refreshed.get("refresh_token", "")
+                ),
+                max_age=SESSION_DURATION
+            )
+        )
+
+        try:
+            user = supabase_client.get_user(access_token)
+        except Exception:
+            return None
+
+    user_id = user.get("id")
+
+    if not user_id:
+        return None
+
+    try:
+        if not supabase_client.is_admin(access_token, user_id):
+            return None
+    except Exception:
+        return None
+
+    return {
+        "access_token": access_token,
+        "user_id": user_id
+    }
 
 
 class BurakReviewServer(SimpleHTTPRequestHandler):
@@ -157,50 +281,72 @@ class BurakReviewServer(SimpleHTTPRequestHandler):
             raw_data = self.rfile.read(content_length)
             data = json.loads(raw_data.decode("utf-8"))
 
-            username = str(data.get("username", ""))
+            email = str(data.get("email", "")).strip()
             password = str(data.get("password", ""))
 
-            if not username or not password:
+            if not email or not password:
                 record_login_failure(ip)
                 self.send_json(
-                    {"error": "Kullanici adi ve sifre gerekli."},
+                    {"error": "E-posta ve sifre gerekli."},
                     400
                 )
                 return
 
-            if not verify_username(username):
+            try:
+                auth = supabase_auth_request(
+                    "token?grant_type=password",
+                    {"email": email, "password": password}
+                )
+            except urllib.error.HTTPError:
                 record_login_failure(ip)
                 self.send_json(
-                    {"error": "Kullanici adi veya sifre hatali."},
+                    {"error": "E-posta veya sifre hatali."},
+                    401
+                )
+                return
+            except Exception:
+                record_login_failure(ip)
+                self.send_json(
+                    {"error": "Giris sirasinda sunucu hatasi olustu."},
+                    500
+                )
+                return
+
+            access_token = auth.get("access_token", "")
+            refresh_token = auth.get("refresh_token", "")
+            user_id = (auth.get("user") or {}).get("id")
+
+            if not access_token or not user_id:
+                record_login_failure(ip)
+                self.send_json(
+                    {"error": "E-posta veya sifre hatali."},
                     401
                 )
                 return
 
-            if not verify_password(password):
+            try:
+                admin = supabase_client.is_admin(access_token, user_id)
+            except Exception:
+                admin = False
+
+            if not admin:
                 record_login_failure(ip)
                 self.send_json(
-                    {"error": "Kullanici adi veya sifre hatali."},
-                    401
+                    {"error": "Bu hesabin yonetici yetkisi yok."},
+                    403
                 )
                 return
 
             clear_login_failures(ip)
 
-            session_id, csrf_token = create_session()
-
-            cookie_value = (
-                f"br_session={session_id}; "
-                "HttpOnly; Path=/; SameSite=Strict"
+            cookie_value = make_session_cookie(
+                self,
+                build_session_value(access_token, refresh_token),
+                max_age=SESSION_DURATION
             )
 
-            if is_https(self):
-                cookie_value += "; Secure"
-
             body = json.dumps(
-                {
-                    "success": True,
-                    "csrfToken": csrf_token
-                },
+                {"success": True},
                 ensure_ascii=False
             ).encode("utf-8")
 
@@ -234,9 +380,9 @@ class BurakReviewServer(SimpleHTTPRequestHandler):
         path = urlparse(self.path).path
 
         if path == "/api/auth/me":
-            session_id, session = get_request_session(self)
+            admin = authenticate(self)
 
-            if not session:
+            if not admin:
                 self.send_json(
                     {"authenticated": False},
                     401
@@ -268,15 +414,10 @@ class BurakReviewServer(SimpleHTTPRequestHandler):
         super().do_GET()
 
     def handle_logout(self):
-        session_id, session = get_request_session(self)
-
-        if session_id:
-            delete_session(session_id)
-
         self.send_response(200)
         self.send_header(
             "Set-Cookie",
-            "br_session=; HttpOnly; Path=/; Max-Age=0; SameSite=Strict"
+            make_session_cookie(self, "", max_age=0)
         )
         self.send_header("Cache-Control", "no-store")
         self.send_header(
@@ -307,26 +448,16 @@ class BurakReviewServer(SimpleHTTPRequestHandler):
             )
             return
 
-        session_id, session = get_request_session(self)
+        admin = authenticate(self)
 
-        if not session:
+        if not admin:
             self.send_json(
                 {"error": "Yetkisiz erişim."},
                 401
             )
             return
 
-        csrf_token = self.headers.get("X-CSRF-Token", "")
-
-        if not csrf_token or not hmac.compare_digest(
-            csrf_token,
-            session["csrf"]
-        ):
-            self.send_json(
-                {"error": "Geçersiz CSRF token."},
-                403
-            )
-            return
+        token = admin["access_token"]
 
         try:
             content_length = int(
@@ -425,7 +556,8 @@ class BurakReviewServer(SimpleHTTPRequestHandler):
                         data["slug"],
                         raw_image,
                         extension,
-                        content_type
+                        content_type,
+                        token=token
                     )
 
                 except Exception as image_error:
@@ -454,7 +586,7 @@ class BurakReviewServer(SimpleHTTPRequestHandler):
                 "shouldNotBuy": data.get("shouldNotBuy", []),
                 "specs": data.get("specs", {}),
                 "finalVerdict": data.get("finalVerdict", "")
-            })
+            }, token=token)
 
             self.send_json(
                 {
@@ -483,6 +615,76 @@ class BurakReviewServer(SimpleHTTPRequestHandler):
                     "error":
                     "Sunucu hatası oluştu."
                 },
+                500
+            )
+
+    def do_DELETE(self):
+        path = urlparse(self.path).path
+
+        if path != "/api/products":
+            self.send_json(
+                {"error": "Geçersiz API adresi."},
+                404
+            )
+            return
+
+        admin = authenticate(self)
+
+        if not admin:
+            self.send_json(
+                {"error": "Yetkisiz erişim."},
+                401
+            )
+            return
+
+        try:
+            content_length = int(
+                self.headers.get("Content-Length", "0")
+            )
+
+            if content_length <= 0:
+                self.send_json(
+                    {"error": "Veri gönderilmedi."},
+                    400
+                )
+                return
+
+            raw_data = self.rfile.read(content_length)
+            data = json.loads(raw_data.decode("utf-8"))
+
+            product_id = str(data.get("id", "")).strip()
+
+            if not product_id:
+                self.send_json(
+                    {"error": "Ürün kimliği gerekli."},
+                    400
+                )
+                return
+
+            supabase_client.delete_product(
+                product_id,
+                admin["access_token"]
+            )
+
+            self.send_json(
+                {
+                    "success": True,
+                    "message": "Ürün silindi."
+                },
+                200
+            )
+
+        except json.JSONDecodeError:
+            self.send_json(
+                {"error": "Geçersiz JSON verisi."},
+                400
+            )
+
+        except Exception as error:
+            print("DELETE ERROR:", error)
+
+            self.send_json(
+                {"error": "Sunucu hatası oluştu."},
                 500
             )
 

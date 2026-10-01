@@ -50,11 +50,13 @@ def is_configured():
     return bool(url and key)
 
 
-def _request(method, path, body=None, headers=None, params=None, timeout=30):
+def _request(method, path, body=None, headers=None, params=None, token=None, timeout=30):
     url, key = get_config()
 
     if not url or not key:
         raise RuntimeError("Supabase ayarlari eksik.")
+
+    bearer = token or key
 
     full_url = f"{url}{path}"
 
@@ -68,7 +70,7 @@ def _request(method, path, body=None, headers=None, params=None, timeout=30):
 
     request = urllib.request.Request(full_url, data=data, method=method)
     request.add_header("apikey", key)
-    request.add_header("Authorization", f"Bearer {key}")
+    request.add_header("Authorization", f"Bearer {bearer}")
 
     if data is not None:
         request.add_header("Content-Type", "application/json")
@@ -129,7 +131,12 @@ def list_products():
     ]
 
 
-def insert_product(payload):
+def insert_product(payload, token=None):
+    if not token:
+        raise RuntimeError(
+            "Urun eklemek icin admin oturumu gerekli."
+        )
+
     body = {
         "slug": payload["slug"],
         "brand": payload["brand"],
@@ -154,7 +161,8 @@ def insert_product(payload):
         body=body,
         headers={
             "Prefer": "return=representation"
-        }
+        },
+        token=token
     )
 
     if not rows:
@@ -163,7 +171,44 @@ def insert_product(payload):
     return row_to_product(rows[0])
 
 
-def upload_image(slug, raw_bytes, extension, content_type):
+def delete_product(product_id, token):
+    if not token:
+        raise RuntimeError(
+            "Urun silmek icin admin oturumu gerekli."
+        )
+
+    _request(
+        "DELETE",
+        "/rest/v1/products",
+        params={"id": f"eq.{product_id}"},
+        headers={"Prefer": "return=minimal"},
+        token=token
+    )
+
+
+def get_user(access_token):
+    return _request(
+        "GET",
+        "/auth/v1/user",
+        token=access_token
+    )
+
+
+def is_admin(access_token, user_id):
+    rows = _request(
+        "GET",
+        "/rest/v1/admins",
+        params={
+            "select": "user_id",
+            "user_id": f"eq.{user_id}"
+        },
+        token=access_token
+    )
+
+    return bool(rows)
+
+
+def upload_image(slug, raw_bytes, extension, content_type, token=None):
     url, key = get_config()
 
     if not url or not key:
@@ -182,7 +227,7 @@ def upload_image(slug, raw_bytes, extension, content_type):
         method="POST"
     )
     request.add_header("apikey", key)
-    request.add_header("Authorization", f"Bearer {key}")
+    request.add_header("Authorization", f"Bearer {token or key}")
     request.add_header("Content-Type", content_type)
     request.add_header("x-upsert", "true")
 

@@ -34,6 +34,22 @@
 
 <main class="admin-page">
 
+    <section class="admin-card admin-list-card">
+
+        <div class="admin-card-title">
+            <span>00</span>
+
+            <div>
+                <h2>Ürünler</h2>
+                <p>Mevcut ürünleri düzenle veya sil.</p>
+            </div>
+        </div>
+
+        <div id="adminProductList" class="admin-product-list"></div>
+
+    </section>
+
+
     <section class="admin-header">
         <small>BURAK REVIEW / YÖNETİM</small>
 
@@ -372,6 +388,16 @@
                 class="admin-secondary-btn large"
             >
                 👀 Önizle
+            </button>
+
+
+            <button
+                type="button"
+                id="cancelEdit"
+                class="admin-secondary-btn large"
+                style="display:none;"
+            >
+                ✖ Düzenlemeyi iptal et
             </button>
 
 

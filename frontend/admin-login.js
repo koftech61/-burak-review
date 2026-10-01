@@ -1,5 +1,5 @@
 const form = document.getElementById("loginForm");
-const usernameInput = document.getElementById("username");
+const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
 const button = document.getElementById("loginButton");
 const message = document.getElementById("message");
@@ -11,7 +11,7 @@ form.addEventListener("submit", async (event) => {
     button.disabled = true;
     button.textContent = "⏳ Giriş yapılıyor...";
 
-    const username = usernameInput.value.trim();
+    const email = emailInput.value.trim();
     const password = passwordInput.value;
 
     try {
@@ -22,7 +22,7 @@ form.addEventListener("submit", async (event) => {
             },
             credentials: "same-origin",
             body: JSON.stringify({
-                username,
+                email,
                 password
             })
         });
@@ -34,17 +34,6 @@ form.addEventListener("submit", async (event) => {
                 result.error || "Giriş başarısız."
             );
         }
-
-        if (!result.csrfToken) {
-            throw new Error(
-                "Güvenlik tokenı alınamadı."
-            );
-        }
-
-        sessionStorage.setItem(
-            "burak_review_csrf",
-            result.csrfToken
-        );
 
         window.location.href = "/admin.html";
 
